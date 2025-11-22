@@ -1,46 +1,46 @@
-Data-Engineering-Programming_Trabalho-Final_Projeto-Pyspark
+# Data-Engineering-Programming_Trabalho-Final_Projeto-Pyspark
 
 Este guia detalha os passos para configurar e executar um projeto de pipeline de dados com PySpark.
 
-1. Configuração Inicial
+## 1. Configuração Inicial
 
 1.1 Instale o Java 17:
-
+```bash 
 O PySpark exige a instalação do Java.
 
 sudo apt update -y && sudo apt upgrade -y
 sudo apt install -y openjdk-17-jdk
+````
 
-
-2. Criação de pasta para o projeto
+## 2. Criação de pasta para o projeto
 
 2.1 Crie uma pasta para o projeto:
-
+```bash 
 mkdir -p data-engineering-pyspark/src
 mkdir -p data-engineering-pyspark/data/input
 mkdir -p data-engineering-pyspark/data/output
-
+````
 
 2.2 Acesse a pasta do projeto:
-
+```bash 
 cd data-engineering-pyspark
+````
 
-
-3. Criar um ambiente virtual e instalação das dependencias 
+## 3. Criar um ambiente virtual e instalação das dependencias 
 
 Instale o PySpark e a dependência pyyaml (necessária para o arquivo de configuração YAML).
-
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install pyspark pyyaml
+````
 
-
-4. Baixe os datasets
+## 4. Baixe os datasets
 
 4.1 Crie o aquivo src/download_data.sh
-
+```bash
 touch src/download_data.sh
-
+````
 
 4.2. Copie o script abaixo no arquivo:
 
@@ -49,7 +49,7 @@ Este script baixa automaticamente o conteúdo dos repositórios necessários par
 https://github.com/infobarbosa/datasets-csv-pedidos
 
 https://github.com/infobarbosa/dataset-json-pagamentos
-
+```bash
 <!-- end list -->
 
 #!/usr/bin/env bash
@@ -93,24 +93,24 @@ ls -lh "$INPUT_DIR"
 
 echo ""
 echo "✅ Processo concluído com sucesso!"
-
+````
 
 4.3 Execute o script para baixar os datasets.
 
 Não se esqueça de conceder permissão de execução: chmod +x src/download_data.sh.
-
+```bash
 ./src/download_data.sh
-
+````
 
 5. Criação do script src/main.py
 
 5.1 Crie o script src/main.py
-
+```bash
 touch src/main.py
-
+````
 
 5.2 Adicione o conteúdo abaixo no arquivo src/main.py:
-
+```bash
 from pyspark.sql import functions as F
 
 from config.settings import carregar_config
@@ -170,7 +170,7 @@ except Exception as e:
 finally:
     print("Finalizado!")
     spark.stop()
-
+````
 
 6. Centralizando as Configurações
 
