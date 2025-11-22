@@ -1,29 +1,23 @@
-# src/spark_manager/session_manager.py
-
 from pyspark.sql import SparkSession
-from config.spark_config import SparkConfig 
 
 class SparkSessionManager:
-    """Classe para gerenciar a sessão Spark."""
+    def __init__(self, app_name: str, master: str):
+        self.app_name = app_name
+        self.master = master
+        self._spark = None
 
-    # Recebe a configuração via Injeção de Dependência
-    def __init__(self, config: SparkConfig):
-        self.config = config
-        self._spark_session = None
-
-    def get_session(self) -> SparkSession:
-        """Cria e retorna a sessão Spark."""
-        if self._spark_session is None:
-            self._spark_session = (
+    def get_spark(self):
+        if self._spark is None:
+            self._spark = (
                 SparkSession.builder
-                .appName(self.config.app_name)
-                .master(self.config.master)
+                .appName(self.app_name)
+                .master(self.master)
+                .config("spark.sql.session.timeZone", "UTC")
                 .getOrCreate()
             )
-        return self._spark_session
+        return self._spark
 
-    def stop_session(self):
-        """Para a sessão Spark."""
-        if self._spark_session is not None:
-            self._spark_session.stop()
-            self._spark_session = None
+    def stop(self):
+        if self._spark:
+            self._spark.stop()
+            self._spark = None
