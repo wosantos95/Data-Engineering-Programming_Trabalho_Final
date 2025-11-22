@@ -1,0 +1,16 @@
+# Ambiente Virtual do Python
+# Substitua "venv/" se seu ambiente tiver outro nome
+venv/
+.venv/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Arquivos de ambiente (que podem conter senhas)
+.env
+.env.*
+
+# Metadados de IDEs (Cloud9/VSCode)
+.vscode/
+.c9/
