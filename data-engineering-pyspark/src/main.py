@@ -1,55 +1,52 @@
-from pyspark.sql import functions as F
+# src/main.py
 
-from config.settings import carregar_config
-from session.spark_session import SparkSessionManager
-from io_utils.data_handler import DataHandler
-from processing.transformations import Transformation
+import sys
+import os
+# Linhas para adicionar o diretório raiz ao caminho de busca
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-config = carregar_config()
+from config.spark_config import SparkConfig
 
-app_name = config["spark"]["app_name"]
-path_pagamentos = config["paths"]["pagamentos"]
-path_pedidos = config["paths"]["pedidos"]
-pedidos_csv_options = config["file_options"]["pedidos_csv"]
-path_output = config["paths"]["output"]
+# --- CORREÇÃO: Prefixar as importações com 'src.' ---
+from src.spark_manager.session_manager import SparkSessionManager
+from src.io.data_io import DataIO
+from src.business_logic.sales_report_logic import SalesReportLogic
+from src.orchestration.pipeline_orchestrator import PipelineOrchestrator
+# ----------------------------------------------------
 
-print("Iniciando Spark...")
-spark = SparkSessionManager.get_spark_session(app_name)
-dh = DataHandler(spark)
-tr = Transformation()
+import logging
+# Configuração do logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-print("Lendo pagamentos...")
-df_pagamentos = dh.load_pagamentos(path_pagamentos)
+if __name__ == "__main__":
+    logger.info("--- START: main.py (Aggregation Root) ---")
 
-print("Lendo pedidos...")
-df_pedidos = dh.load_pedidos(path_pedidos, pedidos_csv_options)
+    try:
+        # 1. INSTANCIAÇÃO de TODAS as dependências (Injeção de Dependências)
+        
+        config = SparkConfig() # Configuração
+        
+        spark_manager = SparkSessionManager(config=config) # Gerenciador de Sessão
+        spark_session = spark_manager.get_session() # Obtém a sessão
 
-print("Extraindo campo fraude...")
-df_pagamentos = df_pagamentos.withColumn("fraude", F.col("avaliacao_fraude.fraude"))
+        data_io = DataIO(spark=spark_session) # I/O (depende da sessão)
 
-print("Filtrando pagamentos recusados e legítimos...")
-df_pag_filtrado = tr.filtrar_pagamentos_validos(df_pagamentos)
+        # Lógica de Negócios (depende do ano e da sessão para o try/catch)
+        logic = SalesReportLogic(target_year=config.target_year, spark=spark_session) 
 
-print("Filtrando pedidos de 2025...")
-df_pedidos_2025 = tr.filtrar_pedidos_2025(df_pedidos)
+        # 2. INJEÇÃO das dependências no Orchestrator
+        orchestrator = PipelineOrchestrator(
+            config=config,
+            spark_manager=spark_manager,
+            data_io=data_io,
+            logic=logic
+        )
 
-print("Calculando valor total...")
-df_pedidos_2025 = tr.adicionar_valor_total(df_pedidos_2025)
-
-print("Realizando JOIN...")
-df_join = tr.join_pedidos_pagamentos(df_pedidos_2025, df_pag_filtrado)
-
-print("Selecionando colunas finais...")
-df_resultado = tr.selecionar_campos_finais(df_join)
-
-print("Ordenando relatório...")
-df_resultado = tr.ordenar_relatorio(df_resultado)
-
-print("Resultado (20 linhas):")
-df_resultado.show(20, truncate=False)
-
-print(f"Gravando parquet em: {path_output}")
-dh.write_parquet(df_resultado, path_output)
-
-print("Finalizado!")
-spark.stop()
+        # 3. Execução do pipeline
+        orchestrator.run_pipeline()
+        
+    except Exception as e:
+        logger.critical(f"❌ Erro Crítico, pipeline interrompido: {e}")
+        
+    logger.info("--- END: main.py ---")
