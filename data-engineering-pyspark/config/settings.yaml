@@ -1,0 +1,13 @@
+spark:
+  app_name: "Analise de Pedidos 2025"
+
+paths:
+  pagamentos: "data/input/pagamentos-*.json.gz"
+  pedidos: "data/input/pedidos-*.csv.gz"
+  output: "data/output/relatorio_pedidos_2025"
+
+file_options:
+  pedidos_csv:
+    compression: "gzip"
+    header: true
+    sep: ";"
