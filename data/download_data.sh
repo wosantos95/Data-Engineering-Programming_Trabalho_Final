@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-ROOT="/home/ubuntu/environment/data-engineering-pyspark"
+ROOT="/home/ubuntu/environment/Data-Enginnering-Programming_Trabalho_Final"  
 INPUT_DIR="$ROOT/data/input"
 
 echo "🧽 Limpando diretórios..."

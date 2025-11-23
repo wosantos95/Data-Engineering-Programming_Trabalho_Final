@@ -289,13 +289,70 @@ if __name__ == "__main__":
 ---
 
 ## 4. Inserir Arquivos de Entrada
-Coloque os CSV/JSON de pedidos e pagamentos em `data/input/`.
 
+### 4.1 Crie o arquivo download_dat.sh
+```python
+touch /Data-Enginnering-Programming_Trabalho_Final/data/download_data.sh
+```
+
+### 4.2 Cole dentro do arquivo download_dat.sh
+
+```python
+set -e
+
+ROOT="/home/ubuntu/environment/data-engineering-pyspark"
+INPUT_DIR="$ROOT/data/input"
+
+echo "🧽 Limpando diretórios..."
+rm -rf "$ROOT/data/tmp-pagamentos" "$ROOT/data/tmp-pedidos"
+mkdir -p "$INPUT_DIR"
+rm -rf "$INPUT_DIR"/*
+
+echo ""
+echo "⬇ Baixando TODOS os arquivos de PAGAMENTOS (via API GitHub)..."
+
+# lista todos os arquivos da pasta data/pagamentos/
+curl -s https://api.github.com/repos/infobarbosa/dataset-json-pagamentos/contents/data/pagamentos \
+| grep "download_url" \
+| cut -d '"' -f 4 \
+| while read url; do
+      echo "Baixando: $(basename $url)"
+      curl -L "$url" -o "$INPUT_DIR/$(basename $url)"
+  done
+
+echo ""
+echo "⬇ Baixando TODOS os arquivos de PEDIDOS (pasta data/pedidos)..."
+
+curl -s https://api.github.com/repos/infobarbosa/datasets-csv-pedidos/contents/data/pedidos \
+| grep "download_url" \
+| cut -d '"' -f 4 \
+| while read url; do
+      echo "Baixando: $(basename $url)"
+      curl -L "$url" -o "$INPUT_DIR/$(basename $url)"
+  done
+
+echo ""
+echo "📂 Arquivos baixados:"
+ls -lh "$INPUT_DIR"
+
+echo ""
+echo "✅ Processo concluído com sucesso!"
+```
+
+### 4.3 Permissão de execução ao script
+```python
+chmod +x data/download_data.sh
+```
+### 4.4 Execute o arquivo download_dat.sh
+```python
+./data/download_data.sh
+```
 ---
 
-## 5. Testes Unitários
-Crie `tests/test_sales_report_logic.py` com PySpark para validar o processamento.
-
+## 5. Execute o teste Unitário
+```python
+pytest tests/test_sales_report_logic.py -v
+```
 ---
 
 ## 6. Executar Pipeline
@@ -308,6 +365,7 @@ Arquivos Parquet serão gerados em `data/output/relatorio_parquet`.
 
 ## 7. Validar Resultado
 ```python
+pyspark
 from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 df = spark.read.parquet("data/output/relatorio_parquet")
